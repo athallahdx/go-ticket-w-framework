@@ -43,15 +43,17 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
 	authService := service.NewAuthService(userRepo, cfg.JWTSecret)
+	adminUserService := service.NewAdminUserService(userRepo)
 
 	userHandler := handler.NewUserHandler(userService, cfg)
 	authHandler := handler.NewAuthHandler(authService, cfg)
+	adminUserHandler := handler.NewAdminUserHandler(adminUserService, cfg)
 
 	log.Info().Msg("✅ MySQL connected Successfully!")
 	log.Info().Str("port", cfg.Port).Msg("✅ Server running")
 
 	router := gin.Default()
-	SetupRouter(router, userHandler, authHandler, cfg)
+	SetupRouter(router, userHandler, adminUserHandler, authHandler, cfg)
 
 	if err := router.Run(":" + cfg.Port); err != nil {
 		log.Fatal().Err(err).Msg("Server failed to start")

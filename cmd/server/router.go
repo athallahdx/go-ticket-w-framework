@@ -9,21 +9,41 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func SetupRouter(router *gin.Engine, userHandler *handler.UserHandler, authHandler *handler.AuthHandler, cfg *config.Config) {
+func SetupRouter(
+	router *gin.Engine,
+	userHandler *handler.UserHandler,
+	adminUserHandler *handler.AdminUserHandler,
+	authHandler *handler.AuthHandler,
+	cfg *config.Config,
+) {
 	router.Static("/uploads", "./uploads")
 
 	api := router.Group("/api")
 
-	api.POST("/login", authHandler.Login)
-	api.POST("/register", authHandler.Register)
+	// public
+	api.POST("/auth/login", authHandler.Login)
+	api.POST("/auth/register", authHandler.Register)
 
+	// authenticated
 	auth := api.Group("")
 	auth.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 	{
-		auth.GET("/profile", authHandler.GetProfile)
-		auth.PUT("/profile/change-password", authHandler.ChangePassword)
-		auth.PUT("/profile/update", userHandler.UpdateProfile)
+		auth.GET("/me", authHandler.GetProfile)
+		auth.PUT("/me/password", authHandler.ChangePassword)
+		auth.PUT("/me", userHandler.UpdateProfile)
 	}
 
-	log.Info().Msg("API Routes configured successfully")
+	// admin
+	admin := api.Group("/admin")
+	admin.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+	admin.Use(middleware.RoleMiddleware("admin"))
+	{
+		admin.GET("/users", adminUserHandler.GetAllUsers)
+		admin.GET("/users/:id", adminUserHandler.GetUserByID)
+		admin.PUT("/users/:id", adminUserHandler.UpdateUser)
+		admin.PATCH("/users/:id/role", adminUserHandler.UpdateRole)
+		admin.DELETE("/users/:id", adminUserHandler.DeleteUser)
+	}
+
+	log.Info().Msg("✅ Routes configured successfully")
 }
