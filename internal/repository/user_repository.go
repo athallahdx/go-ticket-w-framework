@@ -49,33 +49,23 @@ func (r *userRepository) GetAll(filter domain.UserFilter, page, limit int) ([]*d
 	var users []*domain.User
 	var total int64
 
-	offset := (page - 1) * limit
 	query := r.db.Model(&domain.User{})
 
 	if filter.Role != "" {
 		query = query.Where("role = ?", filter.Role)
 	}
-
 	if filter.Search != "" {
-		search := "%" + filter.Search + "%"
-		query = query.Where("name LIKE ? OR email LIKE ?", search, search)
+		query = query.Where("name LIKE ? OR email LIKE ?", "%"+filter.Search+"%", "%"+filter.Search+"%")
 	}
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	sortClause := "created_at DESC"
-	allowedSortColumns := map[string]bool{"name": true, "email": true, "role": true, "created_at": true}
-	if allowedSortColumns[filter.SortBy] {
-		order := "asc"
-		if filter.Order == "desc" {
-			order = "desc"
-		}
-		sortClause = filter.SortBy + " " + order
-	}
+	order := filter.SortBy + " " + filter.Order
 
-	if err := query.Offset(offset).Limit(limit).Order(sortClause).Find(&users).Error; err != nil {
+	err := query.Order(order).Offset((page - 1) * limit).Limit(limit).Find(&users).Error
+	if err != nil {
 		return nil, 0, err
 	}
 

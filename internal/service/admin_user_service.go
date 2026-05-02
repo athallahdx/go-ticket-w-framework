@@ -22,6 +22,12 @@ func (s *adminUserService) GetAllUsers(filter domain.UserFilter, page, limit int
 	if limit <= 0 || limit > 100 {
 		limit = 20
 	}
+	if filter.SortBy == "" {
+		filter.SortBy = "created_at"
+	}
+	if filter.Order != "asc" && filter.Order != "desc" {
+		filter.Order = "desc"
+	}
 
 	return s.userRepo.GetAll(filter, page, limit)
 }

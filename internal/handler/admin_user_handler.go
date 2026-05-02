@@ -28,10 +28,22 @@ func (h *AdminUserHandler) GetAllUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 
+	allowedSortFields := map[string]bool{
+		"created_at": true,
+		"name":       true,
+		"role":       true,
+		"email":      true,
+	}
+
+	sortBy := c.DefaultQuery("sort", "created_at")
+	if !allowedSortFields[sortBy] {
+		sortBy = "created_at"
+	}
+
 	filter := domain.UserFilter{
 		Role:   c.Query("role"),
 		Search: c.Query("search"),
-		SortBy: c.DefaultQuery("sort", "created_at"),
+		SortBy: sortBy,
 		Order:  c.DefaultQuery("order", "desc"),
 	}
 
