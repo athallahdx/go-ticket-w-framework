@@ -22,12 +22,12 @@ CREATE TABLE IF NOT EXISTS organizers (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     company_name VARCHAR(255) NOT NULL,
-    phone VARCHAR(20),
-    email VARCHAR(100),
-    logo VARCHAR(255),
-    description TEXT,
-    city VARCHAR(100),
-    province VARCHAR(100),
+    phone VARCHAR(20) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    logo VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    province VARCHAR(100) NOT NULL,
     is_verified BOOLEAN DEFAULT FALSE,
     verified_at TIMESTAMP NULL DEFAULT NULL,
     verified_by BIGINT NULL,
@@ -98,9 +98,10 @@ CREATE TABLE IF NOT EXISTS orders (
     total_amount DECIMAL(10,2) NOT NULL,
     status ENUM('pending','paid','failed','expired','refunded') DEFAULT 'pending',
     payment_method VARCHAR(50),
-    payment_reference VARCHAR(255),
+    payment_reference VARCHAR(255) UNIQUE,
     expired_at DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id),
     INDEX idx_orders_deleted_at (deleted_at)
@@ -117,7 +118,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     price DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (ticket_type_id) REFERENCES ticket_types(id),
+    FOREIGN KEY (ticket_type_id) REFERENCES ticket_types(id)
 );
 
 -- ======================
@@ -163,10 +164,9 @@ CREATE TABLE IF NOT EXISTS event_staff (
 -- No soft delete: append-only audit log, records must never be removed
 CREATE TABLE IF NOT EXISTS checkins (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    ticket_id BIGINT NOT NULL,
-    checked_in_at DATETIME NOT NULL,
+    ticket_id BIGINT NOT NULL UNIQUE,
+    checked_in_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     checked_in_by BIGINT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (ticket_id) REFERENCES tickets(id),
     FOREIGN KEY (checked_in_by) REFERENCES event_staff(id)
 );
