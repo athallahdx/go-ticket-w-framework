@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"mime/multipart"
 	"time"
 
 	"gorm.io/gorm"
@@ -29,6 +30,9 @@ type OrganizerRepository interface {
 	Create(organizer *Organizer) error
 	GetByID(id int64) (*Organizer, error)
 	GetByUserID(userID int64) (*Organizer, error)
+	GetAll(page, limit int) ([]*Organizer, int, error)
+	Update(organizer *Organizer) error
+	Delete(id int64) error
 }
 
 type OrganizerService interface {
@@ -41,4 +45,12 @@ type OrganizerService interface {
 
 	VerifyOrganizer(organizerID int64, adminID int64) error
 	RevokeVerification(organizerID int64, adminID int64) error
+}
+
+type AdminOrganizerService interface {
+	CreateOrganizer(organizer *Organizer, fileHeader *multipart.FileHeader) error
+	GetAllOrganizers(page, limit int) ([]*Organizer, int, error)
+	GetOrganizerByID(id int64) (*Organizer, error)
+	UpdateOrganizer(organizer *Organizer, fileHeader *multipart.FileHeader) error
+	DeleteOrganizer(id int64) error
 }

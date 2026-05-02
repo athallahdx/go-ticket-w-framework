@@ -13,6 +13,8 @@ func SetupRouter(
 	router *gin.Engine,
 	userHandler *handler.UserHandler,
 	adminUserHandler *handler.AdminUserHandler,
+	adminOrganizerHandler *handler.AdminOrganizerHandler,
+	adminEventHandler *handler.AdminEventHandler,
 	authHandler *handler.AuthHandler,
 	cfg *config.Config,
 ) {
@@ -38,11 +40,29 @@ func SetupRouter(
 	admin.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 	admin.Use(middleware.RoleMiddleware("admin"))
 	{
-		admin.GET("/users", adminUserHandler.GetAllUsers)
-		admin.GET("/users/:id", adminUserHandler.GetUserByID)
-		admin.PUT("/users/:id", adminUserHandler.UpdateUser)
-		admin.PATCH("/users/:id/role", adminUserHandler.UpdateRole)
-		admin.DELETE("/users/:id", adminUserHandler.DeleteUser)
+		// User Management
+		users := admin.Group("/users")
+		users.GET("/", adminUserHandler.GetAllUsers)
+		users.GET("/:id", adminUserHandler.GetUserByID)
+		users.PUT("/:id", adminUserHandler.UpdateUser)
+		users.PATCH("/:id/role", adminUserHandler.UpdateRole)
+		users.DELETE("/:id", adminUserHandler.DeleteUser)
+
+		// Organizer Management
+		organizers := admin.Group("/organizers")
+		organizers.POST("/", adminOrganizerHandler.CreateOrganizer)
+		organizers.GET("/", adminOrganizerHandler.GetAllOrganizers)
+		organizers.GET("/:id", adminOrganizerHandler.GetOrganizerByID)
+		organizers.PUT("/:id", adminOrganizerHandler.UpdateOrganizer)
+		organizers.DELETE("/:id", adminOrganizerHandler.DeleteOrganizer)
+
+		// Event Management
+		events := admin.Group("/events")
+		events.POST("/", adminEventHandler.CreateEvent)
+		events.GET("/", adminEventHandler.GetAllEvents)
+		events.GET("/:id", adminEventHandler.GetEventByID)
+		events.PUT("/:id", adminEventHandler.UpdateEvent)
+		events.DELETE("/:id", adminEventHandler.DeleteEvent)
 	}
 
 	log.Info().Msg("✅ Routes configured successfully")

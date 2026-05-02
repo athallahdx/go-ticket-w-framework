@@ -25,7 +25,7 @@ type Event struct {
 type EventRepository interface {
 	Create(event *Event) error
 	GetByID(id int64) (*Event, error)
-	GetAll() ([]*Event, error)
+	GetAll(page, limit int) ([]*Event, int, error)
 	Update(event *Event) error
 	Delete(id int64) error
 }
@@ -49,4 +49,12 @@ type EventService interface {
 	AddImage(eventID int64, imageURL string) (*EventImage, error)
 	RemoveImage(imageID int64) error
 	GetImagesByEventID(eventID int64) ([]*EventImage, error)
+}
+
+type AdminEventService interface {
+	CreateEvent(event *Event) error
+	GetAllEvents(page, limit int) ([]*Event, int, error)
+	GetEventByID(id int64) (*Event, error)
+	UpdateEvent(event *Event) error
+	DeleteEvent(id int64) error
 }

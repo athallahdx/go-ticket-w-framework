@@ -20,6 +20,13 @@ type User struct {
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 }
 
+type UserFilter struct {
+	Role   string
+	Search string // searches Name or Email
+	SortBy string
+	Order  string
+}
+
 type UserRepository interface {
 	Create(user *User) error
 	GetByEmail(email string) (*User, error)
@@ -27,12 +34,12 @@ type UserRepository interface {
 	UpdateRole(id int64, role string) error
 	Delete(id int64) error
 	Update(user *User) error
-	GetAll(page, limit int) ([]*User, int, error)
-	GetAllWithDeleted(page, limit int) ([]*User, int, error)
+	GetAll(filter UserFilter, page, limit int) ([]*User, int, error)
+	GetAllWithDeleted(filter UserFilter, page, limit int) ([]*User, int, error)
 }
 
 type AdminUserService interface {
-	GetAllUsers(page, limit int) ([]*User, int, error)
+	GetAllUsers(filter UserFilter, page, limit int) ([]*User, int, error)
 	GetUserByID(id int64) (*User, error)
 	UpdateUser(user *User) error
 	UpdateRole(id int64, role string) error

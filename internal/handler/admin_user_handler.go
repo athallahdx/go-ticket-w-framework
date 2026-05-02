@@ -28,7 +28,14 @@ func (h *AdminUserHandler) GetAllUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 
-	users, total, err := h.adminUserService.GetAllUsers(page, limit)
+	filter := domain.UserFilter{
+		Role:   c.Query("role"),
+		Search: c.Query("search"),
+		SortBy: c.DefaultQuery("sort", "created_at"),
+		Order:  c.DefaultQuery("order", "desc"),
+	}
+
+	users, total, err := h.adminUserService.GetAllUsers(filter, page, limit)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get all users")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -93,7 +100,6 @@ func (h *AdminUserHandler) UpdateUser(c *gin.Context) {
 
 	log.Info().Int64("user_id", id).Msg("User updated successfully by admin")
 
-	// Fetch the updated user
 	updatedUser, _ := h.adminUserService.GetUserByID(id)
 	c.JSON(http.StatusOK, h.toUserResponse(updatedUser))
 }

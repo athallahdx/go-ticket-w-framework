@@ -15,7 +15,7 @@ func NewAdminUserService(userRepo domain.UserRepository) domain.AdminUserService
 	}
 }
 
-func (s *adminUserService) GetAllUsers(page, limit int) ([]*domain.User, int, error) {
+func (s *adminUserService) GetAllUsers(filter domain.UserFilter, page, limit int) ([]*domain.User, int, error) {
 	if page <= 0 {
 		page = 1
 	}
@@ -23,7 +23,7 @@ func (s *adminUserService) GetAllUsers(page, limit int) ([]*domain.User, int, er
 		limit = 20
 	}
 
-	return s.userRepo.GetAll(page, limit)
+	return s.userRepo.GetAll(filter, page, limit)
 }
 
 func (s *adminUserService) GetUserByID(id int64) (*domain.User, error) {

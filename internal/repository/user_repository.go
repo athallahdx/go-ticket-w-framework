@@ -45,34 +45,74 @@ func (r *userRepository) GetByID(id int64) (*domain.User, error) {
 	return &user, nil
 }
 
-func (r *userRepository) GetAll(page, limit int) ([]*domain.User, int, error) {
+func (r *userRepository) GetAll(filter domain.UserFilter, page, limit int) ([]*domain.User, int, error) {
 	var users []*domain.User
 	var total int64
 
 	offset := (page - 1) * limit
+	query := r.db.Model(&domain.User{})
 
-	if err := r.db.Model(&domain.User{}).Count(&total).Error; err != nil {
+	if filter.Role != "" {
+		query = query.Where("role = ?", filter.Role)
+	}
+
+	if filter.Search != "" {
+		search := "%" + filter.Search + "%"
+		query = query.Where("name LIKE ? OR email LIKE ?", search, search)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := r.db.Offset(offset).Limit(limit).Order("created_at DESC").Find(&users).Error; err != nil {
+	sortClause := "created_at DESC"
+	allowedSortColumns := map[string]bool{"name": true, "email": true, "role": true, "created_at": true}
+	if allowedSortColumns[filter.SortBy] {
+		order := "asc"
+		if filter.Order == "desc" {
+			order = "desc"
+		}
+		sortClause = filter.SortBy + " " + order
+	}
+
+	if err := query.Offset(offset).Limit(limit).Order(sortClause).Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
 
 	return users, int(total), nil
 }
 
-func (r *userRepository) GetAllWithDeleted(page, limit int) ([]*domain.User, int, error) {
+func (r *userRepository) GetAllWithDeleted(filter domain.UserFilter, page, limit int) ([]*domain.User, int, error) {
 	var users []*domain.User
 	var total int64
 
 	offset := (page - 1) * limit
+	query := r.db.Unscoped().Model(&domain.User{})
 
-	if err := r.db.Unscoped().Model(&domain.User{}).Count(&total).Error; err != nil {
+	if filter.Role != "" {
+		query = query.Where("role = ?", filter.Role)
+	}
+
+	if filter.Search != "" {
+		search := "%" + filter.Search + "%"
+		query = query.Where("name LIKE ? OR email LIKE ?", search, search)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := r.db.Unscoped().Offset(offset).Limit(limit).Order("created_at DESC").Find(&users).Error; err != nil {
+	sortClause := "created_at DESC"
+	allowedSortColumns := map[string]bool{"name": true, "email": true, "role": true, "created_at": true, "deleted_at": true}
+	if allowedSortColumns[filter.SortBy] {
+		order := "asc"
+		if filter.Order == "desc" {
+			order = "desc"
+		}
+		sortClause = filter.SortBy + " " + order
+	}
+
+	if err := query.Offset(offset).Limit(limit).Order(sortClause).Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
 
