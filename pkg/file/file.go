@@ -25,9 +25,9 @@ var allowedExtensions = map[string]bool{
 }
 
 var uploadDirs = map[EntityType]string{
-	EntityUser:      "uploads/users",
-	EntityEvent:     "uploads/events",
-	EntityOrganizer: "uploads/organizers",
+	EntityUser:      "users",
+	EntityEvent:     "events",
+	EntityOrganizer: "organizers",
 }
 
 var nonAlphanumeric = regexp.MustCompile(`[^a-z0-9_]`)
@@ -133,13 +133,14 @@ func saveOne(header *multipart.FileHeader, entity EntityType, id int64, name str
 	defer file.Close()
 
 	filename := GenerateFilename(entity, id, name, header.Filename)
-	dstPath := filepath.Join(GetUploadDir(entity), filename)
+
+	dstPath := filepath.Join("uploads", GetUploadDir(entity), filename)
 
 	if err := SaveFile(file, header, dstPath); err != nil {
 		return "", err
 	}
 
-	return dstPath, nil
+	return filepath.Join(GetUploadDir(entity), filename), nil
 }
 
 // SaveSingleFile saves one multipart file and returns the saved path.
@@ -170,7 +171,8 @@ func SaveMultipleFiles(files []*multipart.FileHeader, entity EntityType, id int6
 		if err != nil {
 			// rollback — delete already saved files before returning
 			for _, saved := range savedPaths {
-				os.Remove(saved)
+				diskPath := filepath.Join("uploads", saved)
+				os.Remove(diskPath)
 			}
 			return nil, fmt.Errorf("failed on file %s: %w", header.Filename, err)
 		}
@@ -187,7 +189,7 @@ func DeleteFile(path string) error {
 		return errors.New("file path is empty")
 	}
 
-	if err := os.Remove(path); err != nil {
+	if err := os.Remove(filepath.Join("uploads", path)); err != nil {
 		if os.IsNotExist(err) {
 			return errors.New("file not found")
 		}
@@ -208,7 +210,8 @@ func ReplaceFile(oldPath string, newHeader *multipart.FileHeader, entity EntityT
 
 	// only delete old file after new one is safely saved
 	if oldPath != "" {
-		os.Remove(oldPath) // non-fatal — old file might already be gone
+		diskPath := filepath.Join("uploads", oldPath)
+		os.Remove(diskPath) // non-fatal — old file might already be gone
 	}
 
 	return newPath, nil
