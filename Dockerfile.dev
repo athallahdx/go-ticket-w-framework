@@ -1,0 +1,23 @@
+FROM golang:1.25-alpine
+
+# Install build dependencies and air
+RUN apk add --no-cache git curl build-base
+RUN go install github.com/air-verse/air@latest
+
+WORKDIR /app
+
+# Copy go.mod and go.sum first to leverage Docker cache
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the rest of the source code
+COPY . .
+
+# Ensure directories exist
+RUN mkdir -p tmp storage/logs uploads
+
+# Expose ports (8080 for app, maybe others for debug)
+EXPOSE 8080
+
+# Run air for hot-reloading
+CMD ["air", "-c", ".air.toml"]
